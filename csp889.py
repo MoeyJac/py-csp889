@@ -47,7 +47,7 @@ class CipherRotor(Rotor):
         #Create a 2x26 array 
         # array in 0th index stores Left to Right/Encrypt version of Rotor
         # array in 1st index store Right to Left/Decrypt version of Rotor
-        self.cipherRotor = [[[]]*26]*2
+        self.cipherRotor = [[], []]
 
         for i in range(26):
             self.cipherRotor[Rotor.LEFT][i] = Rotor.WIRING[wiringNum][i] - int('A')
@@ -81,7 +81,7 @@ class ControlRotor(Rotor):
         #Create a 2x26 array 
         # array in 0th index stores Left to Right/Encrypt version of Rotor
         # array in 1st index store Right to Left/Decrypt version of Rotor
-        self.controlRotor = [[[]]*26]*2
+        self.controlRotor = [[], []]
 
         for i in range(26):
             self.controlRotor[Rotor.LEFT][i] = Rotor.WIRING[wiringNum][i] - int('A')
@@ -202,7 +202,13 @@ class RotorCage:
             RotorCage.indexBank[i].pos = int(posString.charAt(i) - '0')
 
     def controlBankUpdate(self):
-        pass
+        if RotorCage.controlBank[2].pos == int('O' - 'A'):      # medium/#4 control rotor moves
+            if RotorCage.controlBank[3].pos == int('O' - 'A'):  # slow/#2 control rotor moves
+                RotorCage.controlBank[1].rotCW()
+
+            RotorCage.controlBank[3].rotCW()
+
+        RotorCage.controlBank[2].rotCW()                        # fast/#3 control rotor moves
 
     def cipherBankUpdate(self, machine:int):
         pass
