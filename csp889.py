@@ -152,6 +152,9 @@ class RotorCage:
     cipherBank  = []
     controlBank = []
     indexBank   = []
+
+    # Counter used to detect improperly installed index rotors
+    cipherCount = 0
     
     def __init__(self, cipherSet, controlSet, indexSet):
         
@@ -176,6 +179,41 @@ class RotorCage:
             RotorCage.controlBank[i] = ControlRotor(controlNum, controlSet.charAt(i * 2 + 1) == 'R')
             RotorCage.indexBank[i] = IndexRotor(indexNum, indexSet.charAt(i * 2 + 1) == 'R')
 
+    def zeroize():
+        pass
+
+    def setCipherBankPos(posString):
+        pass
+
+    def setControlBankPos(posString):
+        pass
+
+    def setIndexBankPos(posString):
+        pass
+
+    def controlBankUpdate():
+        pass
+
+    def cipherBankUpdate(machine:int):
+        pass
+
+    def cipherBankPath(direction:bool, pos:int):
+        pass
+
+    def controlBankPath(pos:int):
+        pass
+
+    def indexBankPath(pos:int):
+        pass
+
+    def cipherBankPosToString():
+        pass
+
+    def controlBankPosToString():
+        pass
+
+    def indexBankPosToString():
+        pass
 
 def main():
     pass
