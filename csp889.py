@@ -179,43 +179,65 @@ class RotorCage:
             RotorCage.controlBank[i] = ControlRotor(controlNum, controlSet.charAt(i * 2 + 1) == 'R')
             RotorCage.indexBank[i] = IndexRotor(indexNum, indexSet.charAt(i * 2 + 1) == 'R')
 
-    def zeroize():
+    def zeroize(self):
+        self.setCipherBankPos('OOOOO') # Note these are the Letter O NOT a zero
+        self.setControlBankPos('OOOOO') # Note these are the Letter O NOT a zero
+
+    def setCipherBankPos(self, posString):
+        for i in range(5):
+
+            # if the first or last rotor changes clear the cipherCount
+            if (i is 0) or (i is 4):
+                if RotorCage.cipherBank[i].pos != int(posString.charAt(i) - 'A'):
+                    RotorCage.cipherCount = 0
+            # now update the cipher bank
+            RotorCage.cipherBank[i].pos = int(posString.charAt(i) - 'A')
+
+    def setControlBankPos(self, posString):
+        for i in range(5):
+            RotorCage.controlBank[i].pos = int(posString.charAt(i) - 'A')
+
+    def setIndexBankPos(self, posString):
+        for i in range(5):
+            RotorCage.indexBank[i].pos = int(posString.charAt(i) - '0')
+
+    def controlBankUpdate(self):
         pass
 
-    def setCipherBankPos(posString):
+    def cipherBankUpdate(self, machine:int):
         pass
 
-    def setControlBankPos(posString):
+    def cipherBankPath(self, direction:bool, pos:int):
         pass
 
-    def setIndexBankPos(posString):
+    def controlBankPath(self, pos:int):
         pass
 
-    def controlBankUpdate():
+    def indexBankPath(self, pos:int):
         pass
 
-    def cipherBankUpdate(machine:int):
+    def cipherBankPosToString(self):
         pass
 
-    def cipherBankPath(direction:bool, pos:int):
+    def controlBankPosToString(self):
         pass
 
-    def controlBankPath(pos:int):
-        pass
-
-    def indexBankPath(pos:int):
-        pass
-
-    def cipherBankPosToString():
-        pass
-
-    def controlBankPosToString():
-        pass
-
-    def indexBankPosToString():
+    def indexBankPosToString(self):
         pass
 
 def main():
+
+    cipherOrder = '0N1N2N3N4N'
+    controlOrder = '5N6N7N8N9N'
+    indexOrder = '0N1N2N3N4N'
+
+    cage = RotorCage(cipherOrder, controlOrder, indexOrder)
+
+    cage.zeroize()
+
+    cage.setIndexBankPos('00000')
+
+
     pass
 
 main()
