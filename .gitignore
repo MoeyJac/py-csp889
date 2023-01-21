@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 sigaba101.zip
+
+*.java
