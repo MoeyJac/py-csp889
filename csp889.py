@@ -443,11 +443,13 @@ def main():
 
     ecm.handleInput('TEST TEST')
 
+    encryptedMessage = ecm.paperTape
+
     cage.zeroize()
     ecm.tearTape()
     ecm.setMasterSwitchState(ECM.MasterSwitch.DECRYPT)
 
-    ecm.handleInput('AHYGP QASF')
+    ecm.handleInput(encryptedMessage)
 
     pass
 
