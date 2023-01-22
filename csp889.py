@@ -50,7 +50,7 @@ class CipherRotor(Rotor):
         self.cipherRotor = [[], []]
 
         for i in range(26):
-            self.cipherRotor[Rotor.LEFT][i] = Rotor.WIRING[wiringNum][i] - int('A')
+            self.cipherRotor[Rotor.LEFT][i] = Rotor.WIRING[wiringNum][i] - ord('A')
             self.cipherRotor[Rotor.RIGHT][self.cipherRotor[Rotor.LEFT][i]] = i
 
         self.reversed = reversed
@@ -84,7 +84,7 @@ class ControlRotor(Rotor):
         self.controlRotor = [[], []]
 
         for i in range(26):
-            self.controlRotor[Rotor.LEFT][i] = Rotor.WIRING[wiringNum][i] - int('A')
+            self.controlRotor[Rotor.LEFT][i] = Rotor.WIRING[wiringNum][i] - ord('A')
             self.controlRotor[Rotor.RIGHT][self.controlRotor[Rotor.LEFT][i]] = i
 
         self.reversed = reversed
@@ -157,7 +157,6 @@ class RotorCage:
     cipherCount = 0
     
     def __init__(self, cipherSet, controlSet, indexSet):
-        
         # The passed strings contain the order and orientation of the rotors.
         for i in range(5):
             # Example cipherNum => cipherOrder = "0N1N2N3N4N"
@@ -188,22 +187,22 @@ class RotorCage:
 
             # if the first or last rotor changes clear the cipherCount
             if (i is 0) or (i is 4):
-                if RotorCage.cipherBank[i].pos != int(posString.charAt(i) - 'A'):
+                if RotorCage.cipherBank[i].pos != ord(posString.charAt(i)) - ord('A'):
                     RotorCage.cipherCount = 0
             # now update the cipher bank
-            RotorCage.cipherBank[i].pos = int(posString.charAt(i) - 'A')
+            RotorCage.cipherBank[i].pos = ord(posString.charAt(i)) - ord('A')
 
     def setControlBankPos(self, posString):
         for i in range(5):
-            RotorCage.controlBank[i].pos = int(posString.charAt(i) - 'A')
+            RotorCage.controlBank[i].pos = ord(posString.charAt(i)) - ord('A')
 
     def setIndexBankPos(self, posString):
         for i in range(5):
-            RotorCage.indexBank[i].pos = int(posString.charAt(i) - '0')
+            RotorCage.indexBank[i].pos = ord(posString.charAt(i)) - ord('0')
 
     def controlBankUpdate(self):
-        if RotorCage.controlBank[2].pos == int('O' - 'A'):      # medium/#4 control rotor moves
-            if RotorCage.controlBank[3].pos == int('O' - 'A'):  # slow/#2 control rotor moves
+        if RotorCage.controlBank[2].pos == ord('O' - 'A'):      # medium/#4 control rotor moves
+            if RotorCage.controlBank[3].pos == ord('O' - 'A'):  # slow/#2 control rotor moves
                 RotorCage.controlBank[1].rotCW()
 
             RotorCage.controlBank[3].rotCW()
@@ -211,25 +210,64 @@ class RotorCage:
         RotorCage.controlBank[2].rotCW()                        # fast/#3 control rotor moves
 
     def cipherBankUpdate(self, machine:int):
-        pass
+        move = [False]*5
+
+        # The movements are stored in move[] because more than one of the paths through
+        # the control and index banks can connect with a single cipher rotor magnet at the
+        # same time.  Using the move[] array allows the program to be sequential even though
+        # the machine is concurrent and thereby avoid extra motions of the rotor.
+        if machine == RotorCage.CSP889:
+
+            # 5 = ord('F') - ord('A')
+            # 8 = ord('I') - ord('A')
+            # need i = 5 -> i = 8 [5,6,7,8]
+            for i in range(5, 8 + 1):
+                move[RotorCage.INDEX_MAG[self.indexBankPath(RotorCage.CONTROL_INDEX_889[self.controlBankPath(i)])] - 1] = True
+
+            # Between 1 and 4 cipher rotors will rotate.
+            for i in range(5):
+                if move[i]:
+                    RotorCage.cipherBank[i].rotCW()
+
+                    # Clear the cipher rotor movement counter if the first or last rotor turn.
+                    if i == 0 or i == 4:
+                        RotorCage.cipherCount = 0
+
+        else: # Need to implement CSP-2900 here
+            pass
 
     def cipherBankPath(self, direction:bool, pos:int):
-        pass
+        c = self.pos
+        if direction == RotorCage.ENCRYPT:
+            for rotNum in range(5):
+                c = RotorCage.cipherBank[rotNum].cipherEncPath(c)
+        else:
+            for rotNum in reversed(range(5)):
+                c = RotorCage.cipherBank[rotNum].cipherDecPath(c)
+
+        return c
 
     def controlBankPath(self, pos:int):
-        pass
+        c = pos
+        for rotNum in reversed(range(5)):
+            c = RotorCage.controlBank[rotNum].controlPath(c)
+        return c
 
     def indexBankPath(self, pos:int):
-        pass
+        c = pos
+        for rotNum in range(5):
+            c = RotorCage.indexBank[rotNum].indexPath(c)
+
+        return c
 
     def cipherBankPosToString(self):
-        pass
+        return ''.join([chr(cipherRotor.pos + ord('A')) for cipherRotor in RotorCage.cipherBank])
 
     def controlBankPosToString(self):
-        pass
+        return ''.join([chr(controlRotor.pos + ord('A')) for controlRotor in RotorCage.controlBank])
 
     def indexBankPosToString(self):
-        pass
+        return ''.join([chr(indexRotor.pos + ord('A')) for indexRotor in RotorCage.indexBank])
 
 def main():
 
@@ -242,8 +280,5 @@ def main():
     cage.zeroize()
 
     cage.setIndexBankPos('00000')
-
-
-    pass
 
 main()
