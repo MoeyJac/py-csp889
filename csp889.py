@@ -27,7 +27,7 @@ class Rotor:
     ]
 
     def __init__(self):
-        self.pos
+        self.pos = 0
         self.reversed = False
 
     def rotCW(self):
@@ -44,13 +44,14 @@ class Rotor:
 class CipherRotor(Rotor):
 
     def __init__(self, wiringNum, reversed=False):
+        super(CipherRotor, self).__init__()
         #Create a 2x26 array 
         # array in 0th index stores Left to Right/Encrypt version of Rotor
         # array in 1st index store Right to Left/Decrypt version of Rotor
-        self.cipherRotor = [[], []]
+        self.cipherRotor = [[None]*26, [None]*26]
 
         for i in range(26):
-            self.cipherRotor[Rotor.LEFT][i] = Rotor.WIRING[wiringNum][i] - ord('A')
+            self.cipherRotor[Rotor.LEFT][i] = (ord(Rotor.WIRING[wiringNum][i]) - ord('A'))
             self.cipherRotor[Rotor.RIGHT][self.cipherRotor[Rotor.LEFT][i]] = i
 
         self.reversed = reversed
@@ -81,10 +82,10 @@ class ControlRotor(Rotor):
         #Create a 2x26 array 
         # array in 0th index stores Left to Right/Encrypt version of Rotor
         # array in 1st index store Right to Left/Decrypt version of Rotor
-        self.controlRotor = [[], []]
+        self.controlRotor = [[None]*26, [None]*26]
 
         for i in range(26):
-            self.controlRotor[Rotor.LEFT][i] = Rotor.WIRING[wiringNum][i] - ord('A')
+            self.controlRotor[Rotor.LEFT][i] = ord(Rotor.WIRING[wiringNum][i]) - ord('A')
             self.controlRotor[Rotor.RIGHT][self.controlRotor[Rotor.LEFT][i]] = i
 
         self.reversed = reversed
@@ -108,7 +109,7 @@ class IndexRotor(Rotor):
         #Create a 2x10 array 
         # array in 0th index stores Left to Right/Encrypt version of Rotor
         # array in 1st index store Right to Left/Decrypt version of Rotor
-        self.indexRotor = [[[]]*10]*2
+        self.indexRotor = [[None]*10, [None]*10]
 
         for i in range(10):
             self.indexRotor[Rotor.LEFT][i] = Rotor.INDEX_WIRING[wiringNum][i]
@@ -149,9 +150,9 @@ class RotorCage:
                 #0 1 2 3 4 5 6 7 8 9 index contacts minus one to match array
     
     # Rotor Banks
-    cipherBank  = []
-    controlBank = []
-    indexBank   = []
+    cipherBank  = [None]*5
+    controlBank = [None]*5
+    indexBank   = [None]*5
 
     # Counter used to detect improperly installed index rotors
     cipherCount = 0
@@ -160,23 +161,23 @@ class RotorCage:
         # The passed strings contain the order and orientation of the rotors.
         for i in range(5):
             # Example cipherNum => cipherOrder = "0N1N2N3N4N"
-            cipherNum = cipherSet.charAt(i * 2) - '0'
+            cipherNum = int(cipherSet[i * 2])
             # Example controlNum => controlOrder = "5N6N7N8N9N";
-            controlNum = controlSet.charAt(i * 2) - '0'
+            controlNum = int(controlSet[i * 2])
             # Example indexNum => indexOrder = "0N1N2N3N4N";
-            indexNum = indexSet.charAt(i * 2) - '0'
+            indexNum = int(indexSet[i * 2])
 
             # Check for out of bounds rotor numbers
-            if (cipherNum < 0) or (cipherNum > (Rotor.WIRING.length - 1)):
+            if (cipherNum < 0) or (cipherNum > (len(Rotor.WIRING) - 1)):
                 cipherNum = 0
-            if (controlNum < 0) or (controlNum > (Rotor.WIRING.length - 1)):
+            if (controlNum < 0) or (controlNum > (len(Rotor.WIRING) - 1)):
                 controlNum = 0
-            if (indexNum < 0) or (indexNum > (Rotor.WIRING.length - 1)):
+            if (indexNum < 0) or (indexNum > (len(Rotor.WIRING) - 1)):
                 indexNum = 0
 
-            RotorCage.cipherBank[i] = CipherRotor(cipherNum, cipherSet.charAt(i * 2 + 1) == 'R')
-            RotorCage.controlBank[i] = ControlRotor(controlNum, controlSet.charAt(i * 2 + 1) == 'R')
-            RotorCage.indexBank[i] = IndexRotor(indexNum, indexSet.charAt(i * 2 + 1) == 'R')
+            RotorCage.cipherBank[i] = CipherRotor(cipherNum, cipherSet[i * 2 + 1] == 'R')
+            RotorCage.controlBank[i] = ControlRotor(controlNum, controlSet[i * 2 + 1] == 'R')
+            RotorCage.indexBank[i] = IndexRotor(indexNum, indexSet[i * 2 + 1] == 'R')
 
     def zeroize(self):
         self.setCipherBankPos('OOOOO') # Note these are the Letter O NOT a zero
@@ -186,19 +187,19 @@ class RotorCage:
         for i in range(5):
 
             # if the first or last rotor changes clear the cipherCount
-            if (i is 0) or (i is 4):
-                if RotorCage.cipherBank[i].pos != ord(posString.charAt(i)) - ord('A'):
+            if (i == 0) or (i == 4):
+                if RotorCage.cipherBank[i].pos != ord(posString[i]) - ord('A'):
                     RotorCage.cipherCount = 0
             # now update the cipher bank
-            RotorCage.cipherBank[i].pos = ord(posString.charAt(i)) - ord('A')
+            RotorCage.cipherBank[i].pos = ord(posString[i]) - ord('A')
 
     def setControlBankPos(self, posString):
         for i in range(5):
-            RotorCage.controlBank[i].pos = ord(posString.charAt(i)) - ord('A')
+            RotorCage.controlBank[i].pos = ord(posString[i]) - ord('A')
 
     def setIndexBankPos(self, posString):
         for i in range(5):
-            RotorCage.indexBank[i].pos = ord(posString.charAt(i)) - ord('0')
+            RotorCage.indexBank[i].pos = ord(posString[i]) - ord('0')
 
     def controlBankUpdate(self):
         if RotorCage.controlBank[2].pos == ord('O' - 'A'):      # medium/#4 control rotor moves
@@ -267,7 +268,7 @@ class RotorCage:
         return ''.join([chr(controlRotor.pos + ord('A')) for controlRotor in RotorCage.controlBank])
 
     def indexBankPosToString(self):
-        return ''.join([chr(indexRotor.pos + ord('A')) for indexRotor in RotorCage.indexBank])
+        return ''.join([chr(indexRotor.pos + ord('0')) for indexRotor in RotorCage.indexBank])
 
 def main():
 
@@ -280,5 +281,11 @@ def main():
     cage.zeroize()
 
     cage.setIndexBankPos('00000')
+
+    print(cage.cipherBankPosToString())
+    print(cage.controlBankPosToString())
+    print(cage.indexBankPosToString())
+
+    pass
 
 main()
