@@ -56,23 +56,23 @@ class CipherRotor(Rotor):
 
         self.reversed = reversed
         
-    def cipherEncPath(self, inVal):
+    def cipherEncPath(self, input):
         out = 0
 
         if self.reversed:
-            out = (self.pos - self.cipherRotor[Rotor.RIGHT][(self.pos - inVal + 26) % 26] + 26) % 26
+            out = (self.pos - self.cipherRotor[Rotor.RIGHT][(self.pos - input + 26) % 26] + 26) % 26
         else:
-            out = (self.cipherRotor[Rotor.LEFT][(inVal + self.pos) % 26] - self.pos + 26) % 26
+            out = (self.cipherRotor[Rotor.LEFT][(input + self.pos) % 26] - self.pos + 26) % 26
 
         return out
 
-    def cipherDecPath(self, inVal):
+    def cipherDecPath(self, input):
         out = 0
 
         if self.reversed:
-            out = (self.pos - self.cipherRotor[Rotor.LEFT][(self.pos - inVal + 26) % 26] + 26) % 26
+            out = (self.pos - self.cipherRotor[Rotor.LEFT][(self.pos - input + 26) % 26] + 26) % 26
         else:
-            out = (self.cipherRotor[Rotor.RIGHT][(inVal + self.pos) % 26] - self.pos + 26) % 26
+            out = (self.cipherRotor[Rotor.RIGHT][(input + self.pos) % 26] - self.pos + 26) % 26
 
         return out
     
@@ -90,16 +90,16 @@ class ControlRotor(Rotor):
 
         self.reversed = reversed
 
-    def controlPath(self, inVal):
+    def controlPath(self, input):
         out = 0
 
         # Adding 26 to any value that might go negative prevents a negative value that might
         # cause a divide error during the mod (%) 26 operation.
 
         if self.reversed:
-            out = (self.pos - self.controlRotor[Rotor.LEFT][(self.pos - inVal + 26) % 26] + 26) % 26
+            out = (self.pos - self.controlRotor[Rotor.LEFT][(self.pos - input + 26) % 26] + 26) % 26
         else:
-            out = (self.controlRotor[Rotor.RIGHT][(inVal + self.pos) % 26] - self.pos + 26) % 26
+            out = (self.controlRotor[Rotor.RIGHT][(input + self.pos) % 26] - self.pos + 26) % 26
 
         return out
 
@@ -117,13 +117,13 @@ class IndexRotor(Rotor):
 
         self.reversed = reversed
 
-    def indexPath(self, inVal):
+    def indexPath(self, input):
         out = 0
 
         if self.reversed:
-            out = (self.pos - self.indexRotor[Rotor.RIGHT][(self.pos - inVal + 10) % 10] + 10) % 10
+            out = (self.pos - self.indexRotor[Rotor.RIGHT][(self.pos - input + 10) % 10] + 10) % 10
         else:
-            out = (self.indexRotor[Rotor.LEFT][(inVal + self.pos) % 10] - self.pos + 10) % 10
+            out = (self.indexRotor[Rotor.LEFT][(input + self.pos) % 10] - self.pos + 10) % 10
 
         return out
 
@@ -270,22 +270,80 @@ class RotorCage:
     def indexBankPosToString(self):
         return ''.join([chr(indexRotor.pos + ord('0')) for indexRotor in RotorCage.indexBank])
 
+    def printRotorPositions(self):
+        print(self.cipherBankPosToString())
+        print(self.controlBankPosToString())
+        print(self.indexBankPosToString())
+
+class ECM:
+    ENCRYPT, DECRYPT = False, True
+    CSP889, CSP2900, CSPNONE = 0, 1, 2
+
+    def __init__(self, cipherSet, controlSet, indexSet):
+        # Used to represent the zeroized state of the machine
+        # True if in Zeroize mode, False if in Operate mode
+        self.zeroize = True 
+
+        self.paperTape = ''
+        self.charCount = 0
+        self.encPaperCount = 0 # used to create 5 character groups
+
+        self.cipherPositions = ''
+        self.controlPositions = ''
+        self.indexPositons = ''
+
+        self.cage = RotorCage(cipherSet, controlSet, indexSet)
+
+    def tearTape(self):
+        self.paperTape = ''
+
+    def clearCounter(self):
+        self.charCount = 0
+
+    # Encrypts or Decrypts a single character
+    def ecmCycle(self, s:str, direction:bool, machine:int):
+        # Convert user input to numeric index
+        input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.index(s)
+
+        # Encipher or Decipher the character
+        out = self.cipherBankPath(direction, input)
+
+        # Convert the integer representation of the Enciphered/Deciphered character
+        # to a string
+        sout = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[out:out+1]
+
+        # Rotate 1 to 4 cipher rotors
+        self.cipherBankUpdate(machine)
+
+        # Rotate the control rotors
+        self.controlBankUpdate()
+
+        return sout
+
+    def input(self, input:str):
+        pass
+
 def main():
 
+    # Default rotor order. Will be updated to accept user input to configure rotor order
     cipherOrder = '0N1N2N3N4N'
     controlOrder = '5N6N7N8N9N'
     indexOrder = '0N1N2N3N4N'
 
-    cage = RotorCage(cipherOrder, controlOrder, indexOrder)
+    # Instantiate the RotorCage (the 3 sets of rotors that make up the device) with the 
+    # rotor ordering
+    ecm = ECM(cipherOrder, controlOrder, indexOrder)
+    cage = ecm.cage
 
+    # Zeroize the rotor, or position all rotors on O (letter) for Cipher/Control rotors
+    # Note: It does not matter the ordering of rotors, this function simply spins each
+    # individual rotor until the rotors all line up
     cage.zeroize()
 
+    # Zeroizing of the Index rotor bank
     cage.setIndexBankPos('00000')
 
-    print(cage.cipherBankPosToString())
-    print(cage.controlBankPosToString())
-    print(cage.indexBankPosToString())
+    cage.printRotorPositions()
 
-    pass
 
 main()
