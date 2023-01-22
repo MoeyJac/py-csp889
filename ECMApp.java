@@ -828,7 +828,7 @@ public class ECMApp extends Applet {
     // Convert from internal integer representation to string.  This is the inverse of
     // the lookup done before the encipher or decipher.  Note that substring goes from
     // the first parameter to the second parameter - 1.
-    sout = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(out,out+1);
+    sout = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(out, out+1);
         //      01234567890123456789012345          // internal representation result
 
     cage.cipherBankUpdate(machine);         // Rotate 1 to 4 cipher rotors. 

@@ -1,3 +1,5 @@
+from enum import Enum
+
 class Rotor:
     ENCRYPT, DECRYPT = False, True
     RIGHT, LEFT = 1, 0
@@ -31,12 +33,12 @@ class Rotor:
         self.reversed = False
 
     def rotCW(self):
-        pos = (pos + 1) % 26 if self.reversed else (pos - 1 + 26) % 26
-        return pos
+        self.pos = (self.pos + 1) % 26 if self.reversed else (self.pos - 1 + 26) % 26
+        return self.pos
 
     def rotCCW(self):
-        pos = (pos - 1 + 26) % 26 if self.reversed else (pos + 1) % 26
-        return pos
+        self.pos = (self.pos - 1 + 26) % 26 if self.reversed else (self.pos + 1) % 26
+        return self.pos
 
     def reverse(self):
         self.reverse = not self.reverse
@@ -202,8 +204,8 @@ class RotorCage:
             RotorCage.indexBank[i].pos = ord(posString[i]) - ord('0')
 
     def controlBankUpdate(self):
-        if RotorCage.controlBank[2].pos == ord('O' - 'A'):      # medium/#4 control rotor moves
-            if RotorCage.controlBank[3].pos == ord('O' - 'A'):  # slow/#2 control rotor moves
+        if RotorCage.controlBank[2].pos == ord('O') - ord('A'):      # medium/#4 control rotor moves
+            if RotorCage.controlBank[3].pos == ord('O') - ord('A'):  # slow/#2 control rotor moves
                 RotorCage.controlBank[1].rotCW()
 
             RotorCage.controlBank[3].rotCW()
@@ -238,7 +240,7 @@ class RotorCage:
             pass
 
     def cipherBankPath(self, direction:bool, pos:int):
-        c = self.pos
+        c = pos
         if direction == RotorCage.ENCRYPT:
             for rotNum in range(5):
                 c = RotorCage.cipherBank[rotNum].cipherEncPath(c)
@@ -271,18 +273,33 @@ class RotorCage:
         return ''.join([chr(indexRotor.pos + ord('0')) for indexRotor in RotorCage.indexBank])
 
     def printRotorPositions(self):
-        print(self.cipherBankPosToString())
-        print(self.controlBankPosToString())
-        print(self.indexBankPosToString())
+        print(self.cipherBankPosToString(), flush=True)
+        print(self.controlBankPosToString(), flush=True)
+        print(self.indexBankPosToString(), flush=True)
+        print(flush=True)
 
 class ECM:
     ENCRYPT, DECRYPT = False, True
     CSP889, CSP2900, CSPNONE = 0, 1, 2
 
-    def __init__(self, cipherSet, controlSet, indexSet):
+    # Enum for master switch positions
+    class MasterSwitch(Enum):
+        OFF = 'O'
+        PLAIN = 'P'
+        RESET = 'R'
+        ENCRYPT = 'E'
+        DECRYPT = 'D'
+
+    def __init__(self, cipherSet, controlSet, indexSet, zeroize=True):
         # Used to represent the zeroized state of the machine
         # True if in Zeroize mode, False if in Operate mode
-        self.zeroize = True 
+        self.zeroize = zeroize 
+
+        # Default Master Switch State to Off
+        self.masterSwitchState = ECM.MasterSwitch.OFF
+
+        # Default Machine Type to CSP-889
+        self.machineType = ECM.CSP889
 
         self.paperTape = ''
         self.charCount = 0
@@ -296,32 +313,107 @@ class ECM:
 
     def tearTape(self):
         self.paperTape = ''
+        self.encPaperCount = 0
+
+    def writeToTape(self, output, direction):
+        if direction == ECM.ENCRYPT:
+            self.paperTape += ' ' + output if self.encPaperCount % 5 == 0 and self.encPaperCount != 0 else output
+        else:
+            self.paperTape += output
+
+    def printTape(self):
+        print(self.paperTape, flush=True)
+        print(flush=True)
 
     def clearCounter(self):
         self.charCount = 0
 
+    def incrementCharCounter(self):
+        self.charCount += 1
+
+    def incrementPaperCounter(self):
+        self.encPaperCount += 1
+
+    def incrementCipherCounter(self):
+        self.cage.cipherCount += 1
+    
+    def incrementCounters(self):
+        self.incrementCharCounter()
+        self.incrementPaperCounter()
+        self.incrementCipherCounter()
+
+    def setMachineType(self, machine:int):
+        self.machineType = machine
+
+    def setMasterSwitchState(self, state):
+        self.masterSwitchState = state
+
+    def setZeroizeState(self, zeroize:bool):
+        self.zeroize = zeroize
+
     # Encrypts or Decrypts a single character
-    def ecmCycle(self, s:str, direction:bool, machine:int):
+    def ecmCycle(self, input:str, direction:bool) -> str:
+        cage = self.cage
+
         # Convert user input to numeric index
-        input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.index(s)
+        input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.index(input)
 
         # Encipher or Decipher the character
-        out = self.cipherBankPath(direction, input)
+        out = cage.cipherBankPath(direction, input)
 
         # Convert the integer representation of the Enciphered/Deciphered character
         # to a string
         sout = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[out:out+1]
 
         # Rotate 1 to 4 cipher rotors
-        self.cipherBankUpdate(machine)
+        cage.cipherBankUpdate(self.machineType)
 
         # Rotate the control rotors
-        self.controlBankUpdate()
+        cage.controlBankUpdate()
 
         return sout
 
-    def input(self, input:str):
-        pass
+    # Function to take input from user and prints rotor states for each character
+    # prints Tape state at end of input string
+    def handleInput(self, input:str):
+
+        input = input.upper()
+
+        for char in input:
+            match self.masterSwitchState:
+                case ECM.MasterSwitch.OFF:
+                    pass
+                case ECM.MasterSwitch.PLAIN:
+                    pass
+                case ECM.MasterSwitch.RESET:
+                    pass
+                case ECM.MasterSwitch.ENCRYPT:
+                    # Convert all Z's to X's
+                    if char == 'Z':
+                        char = 'X'
+                    # Convert Spaces to Z
+                    elif char == ' ':
+                        char = 'Z'
+                    self.inputChar(char, ECM.ENCRYPT)
+                case ECM.MasterSwitch.DECRYPT:
+                    if char == ' ':
+                        continue
+                    self.inputChar(char, ECM.DECRYPT)
+                case _:
+                    pass
+            
+        self.cage.printRotorPositions()
+        self.printTape()
+        
+    def inputChar(self, input:str, direction:bool):
+        output = self.ecmCycle(input, direction)
+
+        # Convert all Z's to Spaces
+        if output == 'Z' and direction == ECM.DECRYPT:
+            output = ' '
+
+        self.writeToTape(output, direction)
+        self.incrementCounters()
 
 def main():
 
@@ -336,14 +428,28 @@ def main():
     cage = ecm.cage
 
     # Zeroize the rotor, or position all rotors on O (letter) for Cipher/Control rotors
-    # Note: It does not matter the ordering of rotors, this function simply spins each
-    # individual rotor until the rotors all line up
+    # Note: The ordering of rotors does not matter, this function simply spins each
+    # individual rotor until the rotors all line up (difference between order and zeroize)
     cage.zeroize()
 
     # Zeroizing of the Index rotor bank
     cage.setIndexBankPos('00000')
 
+    print('Initial Rotor Positions')
     cage.printRotorPositions()
+    print('End Initial Rotor Positions')
+
+    ecm.setMasterSwitchState(ECM.MasterSwitch.ENCRYPT)
+
+    ecm.handleInput('TEST TEST')
+
+    cage.zeroize()
+    ecm.tearTape()
+    ecm.setMasterSwitchState(ECM.MasterSwitch.DECRYPT)
+
+    ecm.handleInput('AHYGP QASF')
+
+    pass
 
 
 main()
