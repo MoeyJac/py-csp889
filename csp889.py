@@ -46,7 +46,13 @@ class Rotor:
 class CipherRotor(Rotor):
 
     def __init__(self, wiringNum, reversed=False):
-        super(CipherRotor, self).__init__()
+        # Removed call to super as it is causing conflicts in converting the python to JS
+        #super(CipherRotor, self).__init__()
+
+        # Remplaced with direct instationation of instance variables here
+        self.pos = 0
+        self.reversed = False
+
         #Create a 2x26 array 
         # array in 0th index stores Left to Right/Encrypt version of Rotor
         # array in 1st index store Right to Left/Decrypt version of Rotor
@@ -278,17 +284,18 @@ class RotorCage:
         print(self.indexBankPosToString(), flush=True)
         print(flush=True)
 
-class ECM:
-    ENCRYPT, DECRYPT = False, True
-    CSP889, CSP2900, CSPNONE = 0, 1, 2
 
-    # Enum for master switch positions
-    class MasterSwitch(Enum):
+# Enum for master switch positions
+class MasterSwitch(Enum):
         OFF = 'O'
         PLAIN = 'P'
         RESET = 'R'
         ENCRYPT = 'E'
         DECRYPT = 'D'
+
+class ECM:
+    ENCRYPT, DECRYPT = False, True
+    CSP889, CSP2900, CSPNONE = 0, 1, 2
 
     def __init__(self, cipherSet, controlSet, indexSet, zeroize=True):
         # Used to represent the zeroized state of the machine
@@ -296,7 +303,7 @@ class ECM:
         self.zeroize = zeroize 
 
         # Default Master Switch State to Off
-        self.masterSwitchState = ECM.MasterSwitch.OFF
+        self.masterSwitchState = MasterSwitch.OFF
 
         # Default Machine Type to CSP-889
         self.machineType = ECM.CSP889
@@ -379,28 +386,27 @@ class ECM:
 
         input = input.upper()
 
-        for char in input:
-            match self.masterSwitchState:
-                case ECM.MasterSwitch.OFF:
-                    pass
-                case ECM.MasterSwitch.PLAIN:
-                    pass
-                case ECM.MasterSwitch.RESET:
-                    pass
-                case ECM.MasterSwitch.ENCRYPT:
-                    # Convert all Z's to X's
-                    if char == 'Z':
-                        char = 'X'
-                    # Convert Spaces to Z
-                    elif char == ' ':
-                        char = 'Z'
-                    self.inputChar(char, ECM.ENCRYPT)
-                case ECM.MasterSwitch.DECRYPT:
-                    if char == ' ':
-                        continue
-                    self.inputChar(char, ECM.DECRYPT)
-                case _:
-                    pass
+        for character in input:
+            if self.masterSwitchState == MasterSwitch.OFF:
+                pass
+            elif self.masterSwitchState == MasterSwitch.PLAIN:
+                pass
+            elif self.masterSwitchState == MasterSwitch.RESET:
+                pass
+            elif self.masterSwitchState == MasterSwitch.ENCRYPT:
+                # Convert all Z's to X's
+                if character == 'Z':
+                    character = 'X'
+                # Convert Spaces to Z
+                elif character == ' ':
+                    character = 'Z'
+                self.inputChar(character, ECM.ENCRYPT)
+            elif self.masterSwitchState == MasterSwitch.DECRYPT:
+                if character == ' ':
+                    continue
+                self.inputChar(character, ECM.DECRYPT)
+            else:
+                pass
             
         self.cage.printRotorPositions()
         self.printTape()
@@ -439,7 +445,7 @@ def main():
     cage.printRotorPositions()
     print('End Initial Rotor Positions')
 
-    ecm.setMasterSwitchState(ECM.MasterSwitch.ENCRYPT)
+    ecm.setMasterSwitchState(MasterSwitch.ENCRYPT)
 
     ecm.handleInput('TEST TEST')
 
@@ -447,7 +453,7 @@ def main():
 
     cage.zeroize()
     ecm.tearTape()
-    ecm.setMasterSwitchState(ECM.MasterSwitch.DECRYPT)
+    ecm.setMasterSwitchState(MasterSwitch.DECRYPT)
 
     ecm.handleInput(encryptedMessage)
 
