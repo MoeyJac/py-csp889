@@ -1,8 +1,10 @@
 from enum import Enum
 
 class Rotor:
-    ENCRYPT, DECRYPT = False, True
-    RIGHT, LEFT = 1, 0
+    ENCRYPT = False
+    DECRYPT = True
+    RIGHT = 1
+    LEFT = 0
     
     WIRING = [
         ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'],
@@ -136,8 +138,11 @@ class IndexRotor(Rotor):
         return out
 
 class RotorCage:
-    ENCRYPT, DECRYPT = False, True
-    CSP889, CSP2900, CSPNONE = 0, 1, 2
+    ENCRYPT = False
+    DECRYPT = True
+    CSP889 = 1
+    CSP2900 = 1
+    CSPNONE = 2
 
     # This table has the wiring between the left side of the control rotor 
     # bank to the left side of the index rotor.  This table is for a CSP-889.
@@ -294,8 +299,11 @@ class MasterSwitch(Enum):
         DECRYPT = 'D'
 
 class ECM:
-    ENCRYPT, DECRYPT = False, True
-    CSP889, CSP2900, CSPNONE = 0, 1, 2
+    ENCRYPT = False
+    DECRYPT = True
+    CSP889 = 0
+    CSP2900 = 1
+    CSPNONE = 2
 
     def __init__(self, cipherSet, controlSet, indexSet, zeroize=True):
         # Used to represent the zeroized state of the machine
