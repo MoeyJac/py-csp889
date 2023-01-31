@@ -140,7 +140,7 @@ class IndexRotor(Rotor):
 class RotorCage:
     ENCRYPT = False
     DECRYPT = True
-    CSP889 = 1
+    CSP889 = 0
     CSP2900 = 1
     CSPNONE = 2
 
