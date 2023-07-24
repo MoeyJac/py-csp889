@@ -511,9 +511,9 @@ class Rotor {
         'R','I','U','P','V','N','A','D','L','H','W','B','K'}        
     };
 
-        //  Just for quick reference.
+    //  Just for quick reference.
     //  ABCDEFGHIJKLMNOPQRSTUVWXYZ  // letter
-        //  01234567890123456789012345  // internal representation result
+    //  01234567890123456789012345  // internal representation result
     
     // This table represents the physical rotor wiring for small, index rotors.
     // This table should be 5 items long.  I.e. the two test rotors are normally
@@ -853,4 +853,46 @@ class IndexRotor extends Rotor {
         return(out);    
         }
         
-    } // end of IndexRotor class
+} // end of IndexRotor class
+
+class Application{
+    public static void main(String[] args) {
+
+        String cipherOrder;
+        String controlOrder;
+        String indexOrder;
+        RotorCage cage;
+
+        // Get rotor order parameters. In a real machine each rotor can be used only once,
+        // this version allows using the same rotor number.
+        // There are five rotors in each bank. The string contains an index to the rotor
+        // wiring table followed by either R (reverse) or N (normal) for each of the rotors
+        // that make up a bank.  If the parameters are not provided, or are not the correct
+        // length, defaults are provided.  If an index is not in range, the RotorCage 
+        // constructor will substitute the first rotor wiring.
+
+        cipherOrder = "0N1N2N3N4N";
+        controlOrder = "5N6N7N8N9N";
+        indexOrder = "0N1N2N3N4N";
+
+        // The parameters select the order of the rotors and their orientation (normal or
+        // reversed. Near the end of the war, this was done once each day.
+        //                  Cipher      Control     Index
+        cage = new RotorCage(cipherOrder, controlOrder, indexOrder);
+    
+        // Zeroize all the control and cipher rotors. Zeroizing a rotor is 
+        // setting its position to letter 'O'.
+    
+        cage.zeroize(); 
+
+        // By the end of the war the Index rotor order is always set 10,20,30,40,50.
+        // The starting positions of index rotors comes from the daily key list and 
+        // different positions are used for each classification of message.
+        
+        cage.setIndexBankPos("00000");
+
+        System.out.println(cage.cipherBankPosToString());
+        System.out.println(cage.controlBankPosToString());
+        System.out.println(cage.indexBankPosToString());
+    }
+}
